@@ -23,6 +23,19 @@ def plot_passes(match, player_name):
 
     return fig
 
+def plot_shots(match, player_name):
+    player_filter = (match.type_name=="Shot") & (match.player_name==player_name)
+    df_pass = match.loc[player_filter, ['x', 'y', 'end_x', 'end_y']]
+
+    pitch = Pitch(line_color="black", pitch_color="#799351", stripe_color="#799351", stripe=True)
+    fig, ax = pitch.grid(grid_height=0.9, title_height=0.06, endnote_height=0.04, axis=False, title_space=0, endnote_space=0)
+
+    pitch.arrows(df_pass.x, df_pass.y, df_pass.end_x, df_pass.end_y, width=2, color="white", ax=ax["pitch"])
+    pitch.kdeplot(x=df_pass.x, y=df_pass.y, ax=ax["pitch"], shade=True, alpha=0.5, cmap="plasma")
+
+    return fig
+
+
 def main():
     st.title("Gustavo Alves DR1 AT - Análises de Futebol")
 
@@ -71,7 +84,64 @@ def main():
                 st.subheader(away_team)
                 away_score = matches[matches["match_id"] == game]["away_score"].values[0]
                 st.metric("Gols", away_score)
+        
 
+        st.title("Comparações individuais")
+        st.subheader("Passes")
+        # time da casa
+        lineups = sb.lineups(match_id=game)
+        jogadores = lineups[home_team].values
+        list_jogadores = []
+        for i in jogadores:
+            list_jogadores.append(i[1])
+
+        jogador_casa = st.selectbox("Selecione um Jogador do time da casa", list_jogadores)
+
+        # time visitante
+        lineups = sb.lineups(match_id=game)
+        jogadores = lineups[away_team].values
+        list_jogadores = []
+        for i in jogadores:
+            list_jogadores.append(i[1])
+
+        jogador_visit = st.selectbox("Selecione um Jogador do time visitante", list_jogadores)
+
+        partida = sb.matches(competition_id=competition_id, season_id=season_id)
+        final_match_id = partida[(partida["home_team"] == home_team) & (partida["away_team"] == away_team)].match_id.values[0]
+        final_data = match_data(final_match_id)
+        col_1, col_2 = st.columns(2)
+
+        with col_1:
+            st.subheader(f"Passes de {jogador_casa.split()[0]}")
+
+            fig_1 = plot_passes(final_data, jogador_casa)
+            st.pyplot(fig_1)
+
+        with col_2:
+            st.subheader(f"Passes de {jogador_visit.split()[0]}")
+
+            fig_2 = plot_passes(final_data, jogador_visit)
+            st.pyplot(fig_2)
+
+        
+        
+        col_1, col_2 = st.columns(2)
+        
+        with col_1:
+            st.subheader(f"Chutes de {jogador_casa.split()[0]}")
+
+
+            fig_1 = plot_shots(final_data, jogador_casa)
+            st.pyplot(fig_1)
+
+        with col_2:
+            st.subheader(f"Chutes de {jogador_visit.split()[0]}")
+
+
+            fig_2 = plot_shots(final_data, jogador_visit)
+            st.pyplot(fig_2)
+
+        
         st.title("Dribles")
         dribbles = sb.events(match_id=game, split=True, flatten_attrs=False)["dribbles"]
         st.dataframe(dribbles)
@@ -82,6 +152,39 @@ def main():
 
         st.title("Competições")
         st.dataframe(competitions[competitions["competition_name"] == competition])
+
+        st.title("Partidas")
+        st.dataframe(matches[matches["match_id"] == game])
+
+
+        '''
+
+        st.title("Comparações individuais - Chutes")
+        # time da casa
+        lineups = sb.lineups(match_id=game)
+        jogadores = lineups[home_team].values
+        list_jogadores = []
+        for i in jogadores:
+            list_jogadores.append(i[1])
+
+        jogador_casa_2 = st.selectbox("Selecione um Jogador do time da casa", list_jogadores, key="selectbox_jogador_casa_chute")
+
+        # time visitante
+        lineups = sb.lineups(match_id=game)
+        jogadores = lineups[away_team].values
+        list_jogadores = []
+        for i in jogadores:
+            list_jogadores.append(i[1])
+
+        jogador_visit_2 = st.selectbox("Selecione um Jogador do time visitante", list_jogadores, key="selectbox_jogador_visitante_chute")
+
+        partida = sb.matches(competition_id=competition_id, season_id=season_id)
+        final_match_id = partida[(partida["home_team"] == home_team) & (partida["away_team"] == away_team)].match_id.values[0]
+        final_data = match_data(final_match_id)
+        col_1, col_2 = st.columns(2)
+        '''
+
+
 
     elif choice == "Dados por jogador":
         st.subheader("Dados por jogador")
@@ -96,9 +199,6 @@ def main():
 
             fig_1 = plot_passes(final_data, "Lionel Andrés Messi Cuccittini")
             st.pyplot(fig_1)
-
-
-
 
         with col_2:
             st.subheader("Mbappé")
