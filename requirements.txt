@@ -2,3 +2,4 @@ Streamlit
 statsbombpy
 mplsoccer
 matplotlib
+pandas
