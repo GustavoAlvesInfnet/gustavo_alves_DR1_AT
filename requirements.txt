@@ -3,3 +3,4 @@ statsbombpy
 mplsoccer
 matplotlib
 pandas
+spinners
