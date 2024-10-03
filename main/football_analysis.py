@@ -194,6 +194,10 @@ def main():
             jogador_visit = st.selectbox("Selecione um Jogador do time visitante", list_jogadores)
 
 
+            # Minuto dos eventos
+            minuto = st.slider("Selecione o minuto dos eventos", min_value=0, max_value=120, step=1)
+
+            
 
             # Opções de estatísticas
             estatisticas_opcoes = st.multiselect("Selecione as estatísticas que deseja ver", ["Passes", "Chutes"])
@@ -206,6 +210,8 @@ def main():
                 partida = sb.matches(competition_id=competition_id, season_id=season_id)
                 final_match_id = partida[(partida["home_team"] == home_team) & (partida["away_team"] == away_team)].match_id.values[0]
                 final_data = match_data(final_match_id)
+                final_data = final_data[final_data["minute"] <= minuto]
+
                 col_1, col_2 = st.columns(2)
 
                 with col_1:
