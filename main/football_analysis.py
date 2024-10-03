@@ -6,6 +6,10 @@ import seaborn as sns
 import pandas as pd
 import spinners
 import time
+import plotly.express as px
+import pandas as pd
+
+from plots import plot_passes, plot_conversion, plot_shots_x_goals, plot_shots_team, plot_passes_team, plot_shots, plot_estatisticas_jogadores
 
 parser = Sbopen()
 
@@ -16,115 +20,28 @@ def get_match_label(matches, match_id):
     row = matches[matches["match_id"] == match_id].iloc[0]
     return f"{row['match_date']} - {row['home_team']} vs {row['away_team']}"
 
-def plot_passes(match, player_name):
-    player_filter = (match.type_name=="Pass") & (match.player_name==player_name)
-    df_pass = match.loc[player_filter, ['x', 'y', 'end_x', 'end_y']]
 
-    pitch = Pitch(line_color="black", pitch_color="#799351", stripe_color="#799351", stripe=True)
-    fig, ax = pitch.grid(grid_height=0.9, title_height=0.06, endnote_height=0.04, axis=False, title_space=0, endnote_space=0)
-
-    pitch.arrows(df_pass.x, df_pass.y, df_pass.end_x, df_pass.end_y, width=2, color="white", ax=ax["pitch"])
-    pitch.kdeplot(x=df_pass.x, y=df_pass.y, ax=ax["pitch"], shade=True, alpha=0.5, cmap="plasma")
-
-    return fig
-
-def plot_passes_team(match, team):
-    player_filter = (match.type_name=="Pass") & (match.team_name==team)
-    df_pass = match.loc[player_filter, ['x', 'y', 'end_x', 'end_y']]
-
-    pitch = Pitch(line_color="black", pitch_color="#799351", stripe_color="#799351", stripe=True)
-    fig, ax = pitch.grid(grid_height=0.9, title_height=0.06, endnote_height=0.04, axis=False, title_space=0, endnote_space=0)
-
-    pitch.arrows(df_pass.x, df_pass.y, df_pass.end_x, df_pass.end_y, width=2, color="white", ax=ax["pitch"])
-    pitch.kdeplot(x=df_pass.x, y=df_pass.y, ax=ax["pitch"], shade=True, alpha=0.5, cmap="plasma")
-
-    return fig
-
-def plot_shots(match, player_name):
-    player_filter = (match.type_name=="Shot") & (match.player_name==player_name)
-    df_pass = match.loc[player_filter, ['x', 'y', 'end_x', 'end_y']]
-
-    pitch = Pitch(line_color="black", pitch_color="#799351", stripe_color="#799351", stripe=True)
-    fig, ax = pitch.grid(grid_height=0.9, title_height=0.06, endnote_height=0.04, axis=False, title_space=0, endnote_space=0)
-
-    pitch.arrows(df_pass.x, df_pass.y, df_pass.end_x, df_pass.end_y, width=2, color="white", ax=ax["pitch"])
-    pitch.kdeplot(x=df_pass.x, y=df_pass.y, ax=ax["pitch"], shade=True, alpha=0.5, cmap="plasma")
-
-    return fig
-
-def plot_shots_team(match, team):
-    player_filter = (match.type_name=="Shot") & (match.team_name==team)
-    df_pass = match.loc[player_filter, ['x', 'y', 'end_x', 'end_y']]
-
-    pitch = Pitch(line_color="black", pitch_color="#799351", stripe_color="#799351", stripe=True)
-    fig, ax = pitch.grid(grid_height=0.9, title_height=0.06, endnote_height=0.04, axis=False, title_space=0, endnote_space=0)
-
-    pitch.arrows(df_pass.x, df_pass.y, df_pass.end_x, df_pass.end_y, width=2, color="white", ax=ax["pitch"])
-    pitch.kdeplot(x=df_pass.x, y=df_pass.y, ax=ax["pitch"], shade=True, alpha=0.5, cmap="plasma")
-
-    return fig
-
-def plot_shots_x_goals(matches, game, home_team, away_team):
-            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
-
-            home_score = matches[matches["match_id"] == game]["home_score"].values[0]
-            away_score = matches[matches["match_id"] == game]["away_score"].values[0]
-
-            home_chutes = sb.events(match_id=game, split=True, flatten_attrs=False)["shots"]["possession_team"] == home_team
-            home_chutes = home_chutes.sum()
-
-            away_chutes = sb.events(match_id=game, split=True, flatten_attrs=False)["shots"]["possession_team"] == away_team
-            away_chutes = away_chutes.sum()
-
-            max_value = max(home_score, away_score, home_chutes, away_chutes)
-
-            ax1.bar(["Gols", "Chutes"], [home_score, home_chutes])
-            ax1.set_title('Comparação de Gols e Chutes - Time da Casa')
-            ax1.set_xlabel('Tipo')
-            ax1.set_ylabel('Número')
-            ax1.set_ylim(0, max_value + 1)
-
-            ax2.bar(["Gols", "Chutes"], [away_score, away_chutes])
-            ax2.set_title('Comparação de Gols e Chutes - Time Visitante')
-            ax2.set_xlabel('Tipo')
-            ax2.set_ylabel('Número')
-            ax2.set_ylim(0, max_value + 1)
-
-            return fig
-
-def plot_conversion(matches, game, home_team, away_team):
-            fig, ax = plt.subplots(figsize=(8, 6))
-
-            home_score = matches[matches["match_id"] == game]["home_score"].values[0]
-            away_score = matches[matches["match_id"] == game]["away_score"].values[0]
-
-            home_chutes = sb.events(match_id=game, split=True, flatten_attrs=False)["shots"]["possession_team"] == home_team
-            home_chutes = home_chutes.sum()
-
-            away_chutes = sb.events(match_id=game, split=True, flatten_attrs=False)["shots"]["possession_team"] == away_team
-            away_chutes = away_chutes.sum()
-
-            home_conversao = (home_score / home_chutes) * 100
-            away_conversao = (away_score / away_chutes) * 100
-
-            ax.bar(["Time da Casa", "Time Visitante"], [home_conversao, away_conversao])
-            ax.set_title('Conversão de Chutes em Gols')
-            ax.set_xlabel('Time')
-            ax.set_ylabel('Conversão (%)')
-            ax.set_ylim(0, 100)
-
-            return(fig)
 
 def main():
 
 
-    st.title("Gustavo Alves DR1 AT - Análises de Futebol")
+    st.title("DR1 AT - Análises de Futebol")
 
-    menu = ["Home", "Dados por competição", "Dados por jogador", "Análises"]
+    menu = ["Home", "Dados por competição", "Final da Copa do Mundo de 2022"]
     choice = st.sidebar.selectbox("Menu", menu)
 
     if choice == "Home":
-        st.subheader("Home")
+        st.title("Bem vindo ao projeto de Análise de Futebol")
+
+        st.subheader("Este projeto foi desenvolvido para auxiliar na compreensão da analise de dados de futebol")
+
+        st.text("Escolha uma das opções no menu lateral para comecar")
+
+        st.text("Desenvolvido por Gustavo Alves")
+
+        st.text("https://github.com/GustavoAlvesInfnet/gustavo_alves_DR1_AT")
+
+        st.image("./imgs/audience.jpg")
 
     elif choice == "Dados por competição":
         
@@ -158,7 +75,7 @@ def main():
 
 
             
-        tab1, tab2, tab3 = st.tabs(["Informações sobre a partida", "Informações sobre os jogadores", "Tabelas"])
+        tab1, tab2, tab3 = st.tabs(["Informações sobre a partida", "Formulário sobre os jogadores", "Tabelas"])
 
         with tab1:
 
@@ -276,8 +193,6 @@ def main():
 
             jogador_visit = st.selectbox("Selecione um Jogador do time visitante", list_jogadores)
 
-            # Intervalo de tempo
-            intervalo_tempo = st.slider("Selecione o intervalo de tempo", 0, 110, (0, 110))
 
 
             # Opções de estatísticas
@@ -370,28 +285,225 @@ def main():
             
 
 
-    elif choice == "Dados por jogador":
-        st.subheader("Dados por jogador")
+    elif choice == "Final da Copa do Mundo de 2022":
+        st.subheader("Quem foi o melhor jogador da final da copa do mundo de 2022?")
+        st.image("https://images.mlssoccer.com/image/private/t_editorial_landscape_8_desktop_mobile/prd-league/ufp9p8wc4fqawmnx3ouf.jpg")
         fifa_world_cup_22 = sb.matches(competition_id=43, season_id=106)
 
         final_match_id = fifa_world_cup_22[(fifa_world_cup_22["home_team"] == "Argentina") & (fifa_world_cup_22["away_team"] == "France")].match_id.values[0]
         final_data = match_data(final_match_id)
-        col_1, col_2 = st.columns(2)
 
+        st.write("")
+
+        col_1, col_2, col_3 = st.columns(3)
         with col_1:
-            st.subheader("Lionel Messi")
+            st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>MESSI</font></div>", unsafe_allow_html=True)
+        
+            st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lionel-Messi-Argentina-2022-FIFA-World-Cup_sharpness.jpg/330px-Lionel-Messi-Argentina-2022-FIFA-World-Cup_sharpness.jpg", width=200, use_column_width=True)
+        
+        with col_2:
+            st.write("")
+            st.write("")
+            st.write("")
+            st.write("")
+
+            st.image("./imgs/x.png", width=200, use_column_width=True)
+        
+            
+        with col_3:
+            st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>MBAPPÉ</font></div>", unsafe_allow_html=True)
+        
+            st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_by_Sandro_Halank–129_%28cropped%29.jpg/330px-2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_by_Sandro_Halank–129_%28cropped%29.jpg", width=200, use_column_width=True)
+
+
+        st.write("")
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Estatísticas Básicas</font></div>", unsafe_allow_html=True)
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            
+            # número de chutes
+            chutes = final_data[final_data["type_name"] == "Shot"]["player_name"]
+            chutes_messi = chutes[chutes == "Lionel Andrés Messi Cuccittini"].count()
+            #numero de passes
+            passes = final_data[final_data["type_name"] == "Pass"]["player_name"]
+            passes_messi = passes[passes == "Lionel Andrés Messi Cuccittini"].count()
+            #numero de dribles
+            dribles = final_data[final_data["type_name"] == "Dribble"]["player_name"]
+            dribles_messi = dribles[dribles == "Lionel Andrés Messi Cuccittini"].count()
+
+            # Número de gols
+            goals_messi = final_data[final_data["type_name"] == "Shot"]
+            goals_messi = goals_messi[goals_messi["outcome_name"] == "Goal"]
+            goals_messi = goals_messi[goals_messi["player_name"] == "Lionel Andrés Messi Cuccittini"]
+
+            goals_messi_open = goals_messi["sub_type_name"] == "Open Play"
+            goals_messi_open = goals_messi_open.sum()
+
+            goals_messi_penalty = goals_messi["sub_type_name"] == "Penalty"
+            goals_messi_penalty = goals_messi_penalty.sum()
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Gols com bola rolando</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{goals_messi_open}</div>", unsafe_allow_html=True)
+            
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Gols de penalti</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{goals_messi_penalty}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Chutes</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{chutes_messi}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Passes</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{passes_messi}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Dribles</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{dribles_messi}</div>", unsafe_allow_html=True)
+
+
+        with col_2:
+
+            #numero de chutes
+            chutes = final_data[final_data["type_name"] == "Shot"]["player_name"]
+            chutes_mbappe = chutes[chutes == "Kylian Mbappé Lottin"].count()
+            #numero de passes
+            passes = final_data[final_data["type_name"] == "Pass"]["player_name"]
+            passes_mbappe = passes[passes == "Kylian Mbappé Lottin"].count()
+            #numero de dribles
+            dribles = final_data[final_data["type_name"] == "Dribble"]["player_name"]
+            dribles_mbappe = dribles[dribles == "Kylian Mbappé Lottin"].count()
+            #numero de gols
+            goals_mbappe = final_data[final_data["type_name"] == "Shot"]
+            goals_mbappe = goals_mbappe[goals_mbappe["outcome_name"] == "Goal"]
+            goals_mbappe = goals_mbappe[goals_mbappe["player_name"] == "Kylian Mbappé Lottin"]
+
+            goals_mbappe_open = goals_mbappe["sub_type_name"]=="Open Play"
+            goals_mbappe_open = goals_mbappe_open.sum()
+
+            goals_mbappe_penalty = goals_mbappe["sub_type_name"]=="Penalty"
+            goals_mbappe_penalty = goals_mbappe_penalty.sum()
+
+            
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Gols com bola rolando</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{goals_mbappe_open}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Gols de penalti</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{goals_mbappe_penalty}</div>", unsafe_allow_html=True)
+
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Chutes</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{chutes_mbappe}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Passes</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{passes_mbappe}</div>", unsafe_allow_html=True)
+
+            st.markdown(f"<div style='font-size: 30px; color: white; text-align: center;'>Dribles</div>", unsafe_allow_html=True)
+            st.markdown(f"<div style='font-size: 24px; color: #F63366; text-align: center;'>{dribles_mbappe}</div>", unsafe_allow_html=True)
+
+        # mapa de gols
+        st.write("")
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Mapa de Gols</font></div>", unsafe_allow_html=True)
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("<h3 style='text-align: center;'>Messi</h3>", unsafe_allow_html=True)
+
+            fig_1 = plot_shots(goals_messi, "Lionel Andrés Messi Cuccittini")
+            st.pyplot(fig_1)
+
+        with col_2:
+            st.markdown("<h3 style='text-align: center;'>Mbappé</h3>", unsafe_allow_html=True)
+
+            fig_2 = plot_shots(goals_mbappe, "Kylian Mbappé Lottin") 
+            st.pyplot(fig_2)
+
+                
+
+        st.write("")
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Mapa de Chutes</font></div>", unsafe_allow_html=True)
+        
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("<h3 style='text-align: center;'>Messi</h3>", unsafe_allow_html=True)
+
+            fig_3 = plot_shots(final_data, "Lionel Andrés Messi Cuccittini")
+            st.pyplot(fig_3)
+
+        with col_2:
+            st.markdown("<h3 style='text-align: center;'>Mbappé</h3>", unsafe_allow_html=True)
+
+            fig_4 = plot_shots(final_data, "Kylian Mbappé Lottin")
+            st.pyplot(fig_4)
+
+
+        st.write("")   
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Mapa de Passes</font></div>", unsafe_allow_html=True)
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("<h3 style='text-align: center;'>Messi</h3>", unsafe_allow_html=True)
 
             fig_1 = plot_passes(final_data, "Lionel Andrés Messi Cuccittini")
             st.pyplot(fig_1)
 
         with col_2:
-            st.subheader("Mbappé")
+            st.markdown("<h3 style='text-align: center;'>Mbappé</h3>", unsafe_allow_html=True)
 
             fig_2 = plot_passes(final_data, "Kylian Mbappé Lottin") 
             st.pyplot(fig_2)
 
 
+        st.write("")  
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Estatísticas</font></div>", unsafe_allow_html=True)
+        soma_gols = goals_mbappe_open + goals_messi_open
+        soma_chutes = chutes_mbappe + chutes_messi
+        soma_passes = passes_mbappe + passes_messi
+        soma_gols_parados = goals_messi_penalty + goals_mbappe_penalty
+        soma_dribles = dribles_mbappe + dribles_messi
 
+        porcentagem_goals_messi_open = (goals_messi_open / soma_gols)
+        porcentagem_goals_mbappe_open = (goals_mbappe_open / soma_gols)
+        porcentagem_goals_messi_penalty = (goals_messi_penalty / soma_gols_parados)
+        porcentagem_goals_mbappe_penalty = (goals_mbappe_penalty / soma_gols_parados)
+        porcentagem_chutes_mbappe = (chutes_mbappe / soma_chutes)
+        porcentagem_chutes_messi = (chutes_messi / soma_chutes)
+        porcentagem_passes_mbappe = (passes_mbappe / soma_passes)
+        porcentagem_passes_messi = (passes_messi / soma_passes)
+        porcentagem_dribles_mbappe = (dribles_mbappe / soma_dribles)
+        porcentagem_dribles_messi = (dribles_messi / soma_dribles)
+
+
+
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("<h3 style='text-align: center;'>Messi</h3>", unsafe_allow_html=True)
+            fig_1 = plot_estatisticas_jogadores(porcentagem_goals_messi_open, porcentagem_goals_messi_penalty, porcentagem_chutes_messi, porcentagem_passes_messi, porcentagem_dribles_messi)
+            st.plotly_chart(fig_1)
+
+        with col_2:
+            st.markdown("<h3 style='text-align: center;'>Mbappé</h3>", unsafe_allow_html=True)
+            fig_2 = plot_estatisticas_jogadores(porcentagem_goals_mbappe_open, porcentagem_goals_mbappe_penalty, porcentagem_chutes_mbappe, porcentagem_passes_mbappe, porcentagem_dribles_mbappe)
+            st.plotly_chart(fig_2)
+
+
+
+        # pontuação final
+        st.write("")
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Pontuação Final</font></div>", unsafe_allow_html=True)
+        col_1, col_2 = st.columns(2)
+        with col_1:
+            st.markdown("<h3 style='text-align: center;'>Messi</h3>", unsafe_allow_html=True)
+
+            pont_messi = porcentagem_goals_messi_open + porcentagem_goals_messi_penalty + porcentagem_chutes_messi + porcentagem_passes_messi + porcentagem_dribles_messi
+            st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>{pont_messi:.2f}</font></div>", unsafe_allow_html=True)
+
+        with col_2:
+            st.markdown("<h3 style='text-align: center;'>Mbappé</h3>", unsafe_allow_html=True)
+
+            pont_mbappe = porcentagem_goals_mbappe_open + porcentagem_goals_mbappe_penalty + porcentagem_chutes_mbappe + porcentagem_passes_mbappe + porcentagem_dribles_mbappe
+            st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>{pont_mbappe:.2f}</font></div>", unsafe_allow_html=True)
+        
+
+        # conclusões
+        st.write("")
+        st.markdown(f"<div style='text-align: center; font-size: 42px;'><font color='#F63366'>Conclusões</font></div>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>Ambos possuem estilos diferentes, mas o Mbappé tem uma pontuação mais alta.</h3>", unsafe_allow_html=True)
+        st.markdown("<h3 style='text-align: center;'>O Messi possui muito mais passes enquanto o Mbappé possui mais chutes, dribles e gols.</h3>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

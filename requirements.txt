@@ -4,3 +4,4 @@ mplsoccer
 matplotlib
 pandas
 spinners
+plotly
